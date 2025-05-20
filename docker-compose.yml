@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+
+  # Serviço frontend 
+  frontend:
+    container_name: blog-frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+    networks:
+      - blog-network
+    restart: unless-stopped
+
+  # Serviço api
+  api:
+    container_name: blog-api
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    ports:
+      - "4000:3000"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/blog
+      - NODE_ENV=development
+      - JWT_SECRET=techchallenge_secret_key_2024
+    depends_on:
+      - mongodb
+    networks:
+      - blog-network
+    restart: unless-stopped
+
+
+  # Serviço mongodb
+  mongodb:
+    container_name: blog-mongodb
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongo-init:/docker-entrypoint-initdb.d
+    environment:
+      - MONGO_INITDB_DATABASE=blog
+    networks:
+      - blog-network
+    restart: unless-stopped
+
+
+networks:
+  blog-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+    driver: local
